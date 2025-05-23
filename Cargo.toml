@@ -1,0 +1,10 @@
+[package]
+name = "rootftp"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+libunftp = "0.21.0"
+unftp-sbe-fs = "0.3.0"
+tokio = { version = "1", features = ["full"] }
+ftp = "3.0.1"
