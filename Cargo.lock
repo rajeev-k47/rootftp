@@ -1333,6 +1333,7 @@ dependencies = [
  "tokio",
  "unftp-auth-jsonfile",
  "unftp-sbe-fs",
+ "unftp-sbe-rooter",
 ]
 
 [[package]]
@@ -1942,6 +1943,17 @@ dependencies = [
  "tokio-stream",
  "tracing",
  "tracing-attributes",
+]
+
+[[package]]
+name = "unftp-sbe-rooter"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32eaa6293e8326003176ea9a645f93fb2f99a8506d004197b521048a6abbb4e6"
+dependencies = [
+ "async-trait",
+ "libunftp",
+ "tokio",
 ]
 
 [[package]]
