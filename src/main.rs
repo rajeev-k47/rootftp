@@ -1,13 +1,21 @@
+use std::sync::Arc;
+use unftp_auth_jsonfile::JsonFileAuthenticator;
 use unftp_sbe_fs::ServerExt;
 use std::path::PathBuf;
-#[tokio::main]
-pub async fn main() {
-      let ftp_home = PathBuf::from("/home/rajeev/Documents/");
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    //pretty_env_logger::init();
+
+ let authenticator = JsonFileAuthenticator::from_file(String::from(std::env::current_dir().unwrap().join("credentials.json").to_str().unwrap()))?;
+
+ let ftp_home = PathBuf::from("/home/rajeev/Documents/");
+    let addr = "192.168.221.160:2121";
     let server = libunftp::Server::with_fs(ftp_home)
-        .greeting("Welcome to my FTP server")
-        .passive_ports(50000..=65535)
+        .authenticator(Arc::new(authenticator))
         .build()
         .unwrap();
 
-    let _= server.listen("192.168.221.160:2121").await;
+    server.listen(addr).await?;
+
+    Ok(())
 }
