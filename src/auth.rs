@@ -2,7 +2,7 @@ use libunftp::auth::{AuthenticationError, Authenticator, DefaultUser,Credentials
 use std::{fs, path::PathBuf, sync::Mutex};
 use async_trait::async_trait;
 use crate::global_consts::{UserEntry,SimpleAuthenticator};
-
+use crate::config::Config;
 
 impl SimpleAuthenticator {
     pub fn new(path: PathBuf) -> Self {
@@ -18,9 +18,12 @@ impl SimpleAuthenticator {
         }
     }
     pub fn ensure_user_dirs(&self, username: &str) -> std::io::Result<()> {
-        let base_path = PathBuf::from("/home/rajeev/ftpd");
-        let user_dir = base_path.join(username);
         
+        let config = Config::load();
+        let base_path = config.root_dir.clone()
+            .join("ftpd");
+
+        let user_dir = base_path.join(username);
         fs::create_dir_all(&user_dir)?;
         fs::create_dir_all(user_dir.join("uploads"))?;
         fs::create_dir_all(user_dir.join("private"))?;
@@ -63,7 +66,10 @@ impl Authenticator<DefaultUser> for SimpleAuthenticator {
         } else {
             let password = _password.password.as_deref()
                 .ok_or(AuthenticationError::BadPassword)?;
-            let home_dir = PathBuf::from("/home/rajeev/ftpd/").join(_username);
+            
+            let config = Config::load();
+            let home_dir = config.root_dir.clone()
+            .join("ftpd").join(_username);
 
             users.push(UserEntry {
                 username: _username.to_string(),
