@@ -57,7 +57,7 @@ async fn start_server(daemon: bool, auth: SimpleAuthenticator,root_dir: PathBuf,
 
         if daemon {
         Command::new("nohup")
-            .arg("ftp-server")
+            .arg("rootftp")
             .arg("start")
             .spawn()
             .expect("Failed to start daemon");
