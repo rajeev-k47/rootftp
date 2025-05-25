@@ -3,8 +3,9 @@ Description=Root FTP
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/rootftp start --daemon
+ExecStart=/usr/local/bin/rootftp start 
 Restart=always
-
+StandardOutput=append:/var/log/rootftp.log
+StandardError=append:/var/log/rootftp.log
 [Install]
 WantedBy=multi-user.target

@@ -2,6 +2,16 @@
 name = "rootftp"
 version = "0.1.0"
 edition = "2024"
+description = "A simple FTP server tool"
+license = "MIT"
+repository = "https://github.com/rajeev-k47/rootftp"
+readme = "README.md"
+categories = ["command-line-utilities", "network-programming"]
+keywords = ["ftp", "server", "cli"]
+
+[[bin]]
+name = "rootftp"
+path = "src/main.rs"
 
 [dependencies]
 libunftp = "0.21.0"

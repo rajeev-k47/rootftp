@@ -57,10 +57,10 @@ async fn start_server(daemon: bool, auth: SimpleAuthenticator,root_dir: PathBuf,
 
         if daemon {
         Command::new("nohup")
-            .arg("rootftp")
-            .arg("start")
-            .spawn()
-            .expect("Failed to start daemon");
+        .arg("rootftp")
+        .arg("start")
+        .spawn()
+        .expect("Failed to start daemon");
          } else {
         
         let dir = root_dir.join("ftpd");
