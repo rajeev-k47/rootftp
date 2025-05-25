@@ -1,0 +1,10 @@
+[Unit]
+Description=Root FTP
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/rootftp start --daemon
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
