@@ -14,3 +14,6 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 local-ip-address = "0.6.5"
 unftp-sbe-rooter = "0.2.2"
+clap = { version = "4.5.38", features = ["derive"] }
+home = "0.5.11"
+directories = "6.0.0"
