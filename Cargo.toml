@@ -27,3 +27,4 @@ unftp-sbe-rooter = "0.2.2"
 clap = { version = "4.5.38", features = ["derive"] }
 home = "0.5.11"
 directories = "6.0.0"
+inotify = "0.11.0"
