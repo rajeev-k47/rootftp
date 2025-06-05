@@ -24,7 +24,7 @@ impl Config {
             Err(_) => {
                 fs::create_dir_all(config_dir).ok();
                 if let Err(e) = fs::write(&config_path, serde_json::to_string_pretty(&default_config).unwrap()) {
-                    eprintln!("Warning: Couldn't create config: {}", e);
+                    eprintln!("config save err: {}", e);
                 }
                 default_config
             }
