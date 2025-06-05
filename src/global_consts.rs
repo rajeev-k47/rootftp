@@ -1,12 +1,12 @@
-use std::sync::Mutex;
-use std::path::PathBuf;
+use libunftp::auth::UserDetail;
 use serde::{Deserialize, Serialize};
-use unftp_sbe_rooter::UserWithRoot;
-use libunftp::{auth::UserDetail };
 use std::fmt::Formatter;
+use std::path::PathBuf;
+use std::sync::Mutex;
 use unftp_sbe_fs::Filesystem;
-use unftp_sbe_fs::{Meta};
+use unftp_sbe_fs::Meta;
 use unftp_sbe_rooter::RooterVfs;
+use unftp_sbe_rooter::UserWithRoot;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserEntry {
@@ -35,13 +35,12 @@ pub struct SimpleAuthenticator {
     pub users: Mutex<Vec<UserEntry>>,
 }
 
-
 pub fn create_rooted_storage(
     base_dir: PathBuf,
 ) -> Box<dyn Fn() -> RooterVfs<Filesystem, UserEntry, Meta> + Send + Sync> {
     Box::new(move || {
-        let fs = Filesystem::new(base_dir.clone())
-            .unwrap_or_else(|e| panic!("Filesystem err:{}", e));
+        let fs =
+            Filesystem::new(base_dir.clone()).unwrap_or_else(|e| panic!("Filesystem err:{}", e));
         RooterVfs::new(fs)
     })
 }
