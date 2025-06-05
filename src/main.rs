@@ -1,9 +1,9 @@
 use std::sync::Arc;
-use unftp_sbe_fs::ServerExt;
+use libunftp::{auth::Authenticator, ServerBuilder};
 use std::path::PathBuf;
 mod auth;
 mod global_consts;
-use global_consts::SimpleAuthenticator;
+use global_consts::{SimpleAuthenticator, UserEntry};
 use local_ip_address::local_ip;
 mod init;
 use init::init;
@@ -13,12 +13,14 @@ use clap::{Parser};
 use std::process::Command;
 mod config;
 use config::Config;
-use tokio::process::Command as TokioCommand;
+use tokio::{process::Command as TokioCommand};
+use crate::global_consts::create_rooted_storage;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     init()?;
     let mut config = Config::load();
+    eprintln!("Using root_dir = {}", config.root_dir.display());
 
     //with direct json auth
     //let authenticator = JsonFileAuthenticator::from_file(String::from(std::env::current_dir().unwrap().join("credentials.json").to_str().unwrap()))?;
@@ -64,14 +66,16 @@ async fn start_server(daemon: bool, auth: SimpleAuthenticator,root_dir: PathBuf,
          } else {
         
         let dir = root_dir.join("ftpd");
-        let server = libunftp::Server::with_fs(dir)
-            .authenticator(Arc::new(auth))
-            .build()
-            .unwrap();
+        let storage = create_rooted_storage(dir.clone());
 
-        server.listen(addr.clone()).await?;
+        let auth_arc: Arc<dyn Authenticator<UserEntry> + Send + Sync> = Arc::new(auth);
+        let server = ServerBuilder::with_authenticator(storage,auth_arc)
+        .build()
+        .expect("Failed to build server");
+
+    println!("Listening on {}", addr);
+    server.listen(addr).await?;
     }
-    println!("Started FTP server on {}",addr.clone());
 
 
     Ok(())

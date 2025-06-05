@@ -41,11 +41,17 @@ impl SimpleAuthenticator {
     
     //pub fn 
 }
-
 #[async_trait]
 impl Authenticator<DefaultUser> for SimpleAuthenticator {
+    async fn authenticate(&self, _username: &str, _creds: &Credentials) -> Result<DefaultUser, AuthenticationError> {
+        Err(AuthenticationError::BadUser)
+    }
+}
 
-    async fn authenticate(&self, _username: &str, _password: &Credentials) -> Result<DefaultUser, AuthenticationError> {
+#[async_trait]
+impl Authenticator<UserEntry> for SimpleAuthenticator {
+
+    async fn authenticate(&self, _username: &str, _password: &Credentials) -> Result<UserEntry, AuthenticationError> {
 
         if _username.is_empty() || _username.eq_ignore_ascii_case("anonymous") {
             return Err(AuthenticationError::BadUser);
@@ -58,7 +64,11 @@ impl Authenticator<DefaultUser> for SimpleAuthenticator {
             if user.password ==_password.password.as_deref().ok_or(AuthenticationError::BadPassword)?{
                 self.ensure_user_dirs(_username)
                     .map_err(|e| AuthenticationError::new(format!("Dir err.: {}", e)))?;
-                Ok(DefaultUser {})
+                Ok(UserEntry {
+                    username: _username.to_string(),
+                    password: user.password.clone(),
+                    home_dir: Some(PathBuf::from(_username)),
+                })
 
              }else {
                 Err(AuthenticationError::BadPassword)
@@ -67,21 +77,22 @@ impl Authenticator<DefaultUser> for SimpleAuthenticator {
             let password = _password.password.as_deref()
                 .ok_or(AuthenticationError::BadPassword)?;
             
-            let config = Config::load();
-            let home_dir = config.root_dir.clone()
-            .join("ftpd").join(_username);
 
             users.push(UserEntry {
                 username: _username.to_string(),
                 password: password.to_string(),
-                home_dir: home_dir.clone(),
+                home_dir: Some(PathBuf::from(_username)),
                 });
             let json = serde_json::to_string_pretty(&*users)
                     .map_err(|e| AuthenticationError::new(format!("fail:{}", e)))?;
             fs::write(&self.path, json)
                     .map_err(|e| AuthenticationError::new(format!("fail:{}", e)))?;
             self.ensure_user_dirs(_username).map_err(|e| AuthenticationError::new(format!("Dir err.: {}", e)))?;
-            Ok(DefaultUser {})
+            Ok(UserEntry{
+                username: _username.to_string(),
+                password: password.to_string(),
+                home_dir: Some(PathBuf::from(_username)),
+            })
         }
     }
 }
