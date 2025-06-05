@@ -134,8 +134,10 @@ fn run_outbox_watcher(ftpd_root: &Path, username: &str, user_outbox: &Path) {
                         let part = &comps[1];
                         if let Some(target_user) = part.strip_prefix("share.") {
                             let src = watched_path.join(&filename);
-                            let dest_dir = ftpd_root.join(target_user).join("inbox");
+                            let dest_dir = ftpd_root.join(target_user).join("inbox").join(username);
                             let dest = dest_dir.join(&filename);
+
+                            fs::create_dir_all(&dest_dir).ok();
 
                             match fs::rename(&src, &dest) {
                                 Ok(()) => {
