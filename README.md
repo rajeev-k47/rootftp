@@ -55,5 +55,45 @@ rootftp status
 
 ```
 
+## Directory Layout
+ By default (unless you override with setdir), rootftp chooses your home directory:
+
+```bash
+$HOME/ftproot/ftpd/
+```
+Under <root_dir>/ftpd/, each authenticated user automatically gets:
+```bash
+<root_dir>/ftpd/<username>/
+├── home/
+├── inbox/
+├── outbox/
+└── private/
+```
+
+
+```bash
+- home/ – Radom dir.
+- private/ – Random dir.
+- outbox/ – where you place files to send to other users
+- inbox/ – (See “Outbox Feature” below.)
+
+```
+
+
+
+## Outbox
+For sharing files among users (user to user):
+
+  - Create a folder with this convention
+ ```bash
+   <your_root>/outbox/share.<user_to_send>/ (e.g /outbox/share.xyz)
+ ```
+  - Put files to share in this folder
+  - [inotify](https://docs.rs/inotify/latest/inotify/) watches **outbox/** and shares respective file.
+  - Reciever will found these files in his **inbox/** directory
+```bash
+   /inbox/sender/xyz.txt
+ ```
+
 
 
