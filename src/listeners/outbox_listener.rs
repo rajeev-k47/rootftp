@@ -23,7 +23,7 @@ pub fn start_outbox_watchers(ftpd_root: PathBuf) {
         }
         let username = match path.file_name() {
             Some(os) => os.to_string_lossy().into_owned(),
-            None => continue,
+            _none => continue,
         };
 
         let ftpd = ftpd_root.clone();
@@ -147,7 +147,7 @@ fn run_outbox_watcher(ftpd_root: &Path, username: &str, user_outbox: &Path) {
                                     //dest //debug-o.
                                     // );
                                 }
-                                Err(e) => {
+                                Err(_e) => {
                                     //eprintln!(
                                     //  "[{}→{}] Move error {:?} → {:?}: {}",
                                     // username,
