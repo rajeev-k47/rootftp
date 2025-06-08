@@ -1,10 +1,9 @@
 use crate::config::Config;
-use crate::global_consts::{SimpleAuthenticator, UserEntry};
+use crate::constants::{SimpleAuthenticator, UserEntry};
+use crate::listeners::outbox_listener;
 use async_trait::async_trait;
 use libunftp::auth::{AuthenticationError, Authenticator, Credentials, DefaultUser};
 use std::{fs, path::PathBuf, sync::Mutex};
-
-use crate::outbox_listener;
 
 impl SimpleAuthenticator {
     pub fn new(path: PathBuf) -> Self {
