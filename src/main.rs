@@ -1,33 +1,30 @@
-use libunftp::{auth::Authenticator, ServerBuilder};
-use std::path::PathBuf;
-use std::sync::Arc;
 mod auth;
-mod global_consts;
-use global_consts::{SimpleAuthenticator, UserEntry};
-use local_ip_address::local_ip;
-mod init;
-use init::init;
-mod cli;
-use clap::Parser;
-use cli::{Cli, Commands};
-use std::process::Command;
 mod config;
-use crate::global_consts::create_rooted_storage;
+mod constants;
+mod listeners;
+mod system;
+
+use crate::constants::create_rooted_storage;
+use clap::Parser;
 use config::Config;
+use constants::{SimpleAuthenticator, UserEntry};
+use libunftp::{auth::Authenticator, ServerBuilder};
+use local_ip_address::local_ip;
+use std::path::PathBuf;
+use std::process::Command;
+use std::sync::Arc;
+use system::cli::{Cli, Commands};
+use system::init;
 use tokio::process::Command as TokioCommand;
-#[path = "listeners/outbox_listener.rs"]
-mod outbox_listener;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    init()?;
+    init::init()?;
     let mut config = Config::load();
-    eprintln!("Using root_dir = {}", config.root_dir.display());
+    //eprintln!("Using root_dir = {}", config.root_dir.display());
 
-    //with direct json auth
-    //let authenticator = JsonFileAuthenticator::from_file(String::from(std::env::current_dir().unwrap().join("credentials.json").to_str().unwrap()))?;
     let path = config.root_dir.join("credentials.json");
-    println!("Using credentials file = {}", path.display());
+    //println!("Using credentials file = {}", path.display());
     let auth = SimpleAuthenticator::new(path);
 
     let cli = Cli::parse();
