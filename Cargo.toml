@@ -13,6 +13,9 @@ keywords = ["ftp", "server", "cli"]
 name = "rootftp"
 path = "src/main.rs"
 
+[lib]
+name = "rootftp"
+path = "src/lib.rs"    # or add a lib target
 [dependencies]
 libunftp = "0.21.0"
 unftp-sbe-fs = "0.3.0"
@@ -28,3 +31,4 @@ clap = { version = "4.5.38", features = ["derive"] }
 home = "0.5.11"
 directories = "6.0.0"
 inotify = "0.11.0"
+libloading = "0.8.8"

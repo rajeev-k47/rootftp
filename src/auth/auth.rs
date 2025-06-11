@@ -1,6 +1,7 @@
 use crate::config::Config;
 use crate::constants::{SimpleAuthenticator, UserEntry};
 use crate::listeners::outbox_listener;
+use crate::plugin_handler;
 use async_trait::async_trait;
 use libunftp::auth::{AuthenticationError, Authenticator, Credentials, DefaultUser};
 use std::{fs, path::PathBuf, sync::Mutex};
@@ -27,6 +28,9 @@ impl SimpleAuthenticator {
         fs::create_dir_all(user_dir.join("home"))?;
         fs::create_dir_all(user_dir.join("inbox"))?;
         fs::create_dir_all(user_dir.join("outbox"))?;
+
+        let plugin_map = crate::plugin_handler::load_plugins(&config.root_dir.join("plugins"));
+        plugin_handler::start_watchers(base_path.clone(), username.to_string(), plugin_map);
 
         std::thread::spawn(move || {
             outbox_listener::start_outbox_watchers(base_path.clone());

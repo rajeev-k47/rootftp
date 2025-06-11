@@ -2,6 +2,7 @@ mod auth;
 mod config;
 mod constants;
 mod listeners;
+mod plugin_handler;
 mod system;
 
 use crate::constants::create_rooted_storage;
