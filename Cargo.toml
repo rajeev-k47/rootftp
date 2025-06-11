@@ -6,7 +6,7 @@ description = "A simple FTP server tool that allows you to play with files. Mult
 license = "MIT"
 repository = "https://github.com/rajeev-k47/rootftp"
 readme = "README.md"
-categories = ["command-line-utilities", "network-programming", "custom-plugins"]
+categories = ["command-line-utilities", "network-programming"]
 keywords = ["ftp", "server", "cli"]
 
 [[bin]]
