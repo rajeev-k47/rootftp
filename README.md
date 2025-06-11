@@ -7,7 +7,7 @@ Rust-based FTP server with with custom configurable, sharing directories across 
 [![Crates.io](https://img.shields.io/crates/v/rootftp.svg)](https://crates.io/crates/rootftp)
 [![Rust Version](https://img.shields.io/badge/rust-stable-blue.svg)](https://www.rust-lang.org)
 [![CI](https://github.com/rajeev-k47/rootftp/actions/workflows/rust.yml/badge.svg)](https://github.com/rajeev-k47/rootftp/actions)
-![Termux Tested](https://img.shields.io/badge/Termux-v0.1.0_passing-brightgreen)
+![Termux Tested](https://img.shields.io/badge/Termux-v0.1.3_passing-brightgreen)
 
 
 ## Installation
