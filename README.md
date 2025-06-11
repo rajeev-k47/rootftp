@@ -95,5 +95,35 @@ For sharing files among users (user to user):
    /inbox/sender/xyz.txt
  ```
 
+## Plugins (Currently available only when build from source.)
 
+RootFTP has a plugin system that supports pluggable ```.so``` plugins. These plugins are dynamically loaded and automatically invoked when files are added to specific directories.
+
+- Each plugin listens for input files in:
+```
+<root>/ftpd/<username>/<plugin_name>/input/
+```
+- When a new file (e.g., main.cpp) is added to the above path,the plugin matching the file extension (e.g. .cpp) is triggered.
+- If an optional file named input.in exists in the same directory, it serves as an optional input for the file.
+- Then output of that file is written to  
+```
+ <root>/ftpd/<username>/<plugin_name>/output/<filename>.txt
+ ```
+### Plugin development
+ - Make ``custom_plugin (or anything else)`` dir in the root of cloned source code.
+ - RootFTP provides a Plugin trait for development of the plugins. Explore [demo-example](https://github.com/rajeev-k47/rootftp/tree/main/demo_plugin) for more info.
+ - Add rootFTP dependency inside plugin's ``Cargo.toml`` file.
+```rust
+  [lib]
+  crate-type = ["cdylib"]
+
+  [dependencies]
+  rootftp = { path = "../", package = "rootftp" }
+ ```
+- Build your plugin as shared object and install it inside rootFTP server.
+```rust
+  cargo build --release
+  cp /custom_plugin/target/releases/libcustom_plugin.so ~/<root>/plugins/
+```
+> Run server atleast once to ensure creating all necessary directories.
 
