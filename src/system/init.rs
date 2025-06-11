@@ -10,7 +10,9 @@ pub fn init() -> io::Result<()> {
     let credentials = root_dir.join("credentials.json");
     fs::create_dir_all(&root_dir)?;
     fs::create_dir_all(&ftpd)?;
-    fs::File::create(&credentials)?;
+    if !credentials.exists() {
+        fs::File::create(&credentials)?;
+    }
     fs::create_dir_all(&plugins)?;
     Ok(())
 }
