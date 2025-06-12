@@ -31,7 +31,8 @@ impl Plugin for customPlugin {
                 Ok(input_file) => {
                     //do something.
                 }
-                Err(_e) =>{ //do something }
+                Err(_e) =>{ //do something
+                }
             }
         }
     }
