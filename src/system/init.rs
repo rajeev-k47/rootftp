@@ -1,8 +1,9 @@
 use crate::config::Config;
+use crate::helpers::plugin_library_handler::load_plugins;
 use std::fs;
 use std::io;
 
-pub fn init() -> io::Result<()> {
+pub async fn init() -> io::Result<()> {
     let config = Config::load();
     let root_dir = config.root_dir.clone();
     let ftpd = root_dir.join("ftpd");
@@ -14,5 +15,12 @@ pub fn init() -> io::Result<()> {
         fs::File::create(&credentials)?;
     }
     fs::create_dir_all(&plugins)?;
+
+    match load_plugins(false).await {
+        Ok(_) => {
+            println!("Plugins loaded from plugin library");
+        }
+        Err(_err) => println!("Warning: Failed to loading plugins."),
+    };
     Ok(())
 }
