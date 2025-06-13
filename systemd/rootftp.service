@@ -3,7 +3,7 @@ Description=Root FTP
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/rootftp start 
+ExecStart=/usr/local/bin/rootftp start
 Restart=always
 StandardOutput=append:/var/log/rootftp.log
 StandardError=append:/var/log/rootftp.log

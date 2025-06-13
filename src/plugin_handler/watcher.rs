@@ -15,8 +15,16 @@ pub fn start_watchers(
         let mut buf = [0u8; 4096];
 
         for (plugin_name, _) in &plugins {
-            let dir = ftpd_root.join(&user).join(plugin_name).join("input");
-            let out_dir = ftpd_root.join(&user).join(plugin_name).join("output");
+            let dir = ftpd_root
+                .join(&user)
+                .join("plugins")
+                .join(plugin_name)
+                .join("input");
+            let out_dir = ftpd_root
+                .join(&user)
+                .join("plugins")
+                .join(plugin_name)
+                .join("output");
 
             fs::create_dir_all(&dir).ok();
             fs::create_dir_all(&out_dir).ok();
@@ -32,6 +40,8 @@ pub fn start_watchers(
 
         loop {
             let events = inotify.read_events_blocking(&mut buf).unwrap();
+            thread::sleep(Duration::from_millis(1000));
+
             for ev in events {
                 if !ev
                     .mask
@@ -44,10 +54,15 @@ pub fn start_watchers(
                     let filename = name.to_string_lossy();
                     let path = ftpd_root
                         .join(user)
+                        .join("plugins")
                         .join(plugin_name)
                         .join("input")
                         .join(&*filename);
-                    let out_path = ftpd_root.join(user).join(plugin_name).join("output");
+                    let out_path = ftpd_root
+                        .join(user)
+                        .join("plugins")
+                        .join(plugin_name)
+                        .join("output");
                     if let Some((plugin, exts)) = plugins
                         .iter()
                         .find(|(n, _)| n == plugin_name)
@@ -61,7 +76,6 @@ pub fn start_watchers(
                     }
                 }
             }
-            thread::sleep(Duration::from_millis(50));
         }
     });
 }
