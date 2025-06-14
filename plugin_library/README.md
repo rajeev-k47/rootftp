@@ -12,3 +12,7 @@
      ```
    -  Extensions: ['jpeg','jpg','png']
 
+### 3. **CPP Comipler**: (cpp_compiler_plugin.so)
+   -  Can be used to compile and run cpp files.
+   -  Optional input file for stdin (Naming-> input.in).
+   -  Extensions: ['cpp']
