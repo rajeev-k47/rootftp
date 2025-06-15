@@ -49,7 +49,7 @@ sudo systemctl start rootftp
 sudo systemctl enable rootftp
 
 ```
-
+- General usage
 ```
 Usage: rootftp <COMMAND>
 
