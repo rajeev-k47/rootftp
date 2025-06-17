@@ -1,0 +1,8 @@
+target
+.git
+.gitignore
+Dockerfile
+./demo_plugin
+./image_compressor_plugin
+./ocr_plugin
+./plugin_library
