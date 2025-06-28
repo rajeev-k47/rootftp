@@ -22,7 +22,7 @@ Rust-based FTP server with with custom configurable, sharing directories across 
 
 ### Overview
 RootFTP provides a space where you can play with files- upload them, transform them, or run actions on them automatically. With plugin support, you can add custom features like code execution, compression, and more.
-Interact with other users without internet. Also provides you a custom cloud storage which is basically offline but online 😂.
+Interact with other users without internet. Also provides you a custom cloud storage.
 
 ## Installation
 
