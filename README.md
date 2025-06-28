@@ -1,15 +1,18 @@
-
-# Rootftp
-
-Rust-based FTP server with with custom configurable, sharing directories across private networks. Built on the top of [libunftp](https://github.com/bolcom/libunftp).
-
-
 [![Crates.io](https://img.shields.io/crates/v/rootftp.svg)](https://crates.io/crates/rootftp)
 [![Rust Version](https://img.shields.io/badge/rust-stable-blue.svg)](https://www.rust-lang.org)
 [![CI](https://github.com/rajeev-k47/rootftp/actions/workflows/rust.yml/badge.svg)](https://github.com/rajeev-k47/rootftp/actions)
 ![Termux Tested](https://img.shields.io/badge/Termux-v0.1.3_passing-brightgreen)
 
-## Features
+<div align="center">
+  <img src="assets/logo.png" alt="Logo" width="150" height="200">
+  <h1><b>RootFTP</b></h1>
+</div>
+
+## Introduction
+Rust-based FTP server with with custom configurable, sharing directories across private networks. Built on the top of [libunftp](https://github.com/bolcom/libunftp).
+
+
+### Features
 - **FTP Service**: Enables file transfer over a local network without internet connection.
 - **Authentication**: Authentication and persistence of the user crendential at the server over the ftp.
 - **Filesystem**: Root each authenticated user to their own directory acts as a independent rooted user.
@@ -17,7 +20,7 @@ Rust-based FTP server with with custom configurable, sharing directories across 
 - **Plugin System**: Write custom plugins to play with your files.
 - **CLI**: Commands for everything from starting server to loading plugins.
 
-## Overview
+### Overview
 RootFTP provides a space where you can play with files- upload them, transform them, or run actions on them automatically. With plugin support, you can add custom features like code execution, compression, and more.
 Interact with other users without internet. Also provides you a custom cloud storage which is basically offline but online 😂.
 
