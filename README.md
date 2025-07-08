@@ -2,6 +2,8 @@
 [![Rust Version](https://img.shields.io/badge/rust-stable-blue.svg)](https://www.rust-lang.org)
 [![CI](https://github.com/rajeev-k47/rootftp/actions/workflows/rust.yml/badge.svg)](https://github.com/rajeev-k47/rootftp/actions)
 ![Termux Tested](https://img.shields.io/badge/Termux-v0.1.3_passing-brightgreen)
+![Crates.io Downloads (recent)](https://img.shields.io/crates/dr/rootftp)
+
 
 <div align="center">
   <img src="assets/logo.png" alt="Logo" width="150" height="200">
