@@ -1,6 +1,6 @@
 [package]
 name = "rootftp"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2024"
 description = "A simple FTP server tool that allows you to play with files. Multiple users can share their files with each other. You can also build custom plugins see examples for more info."
 license = "MIT"
