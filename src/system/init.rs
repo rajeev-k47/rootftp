@@ -12,7 +12,7 @@ pub async fn init() -> io::Result<()> {
     fs::create_dir_all(&root_dir)?;
     fs::create_dir_all(&ftpd)?;
     if !credentials.exists() {
-        fs::File::create(&credentials)?;
+        fs::write(&credentials, "[]")?;
     }
     fs::create_dir_all(&plugins)?;
 
