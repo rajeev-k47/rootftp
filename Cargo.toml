@@ -1,6 +1,6 @@
 [package]
 name = "rootftp"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 description = "A simple FTP server tool that allows you to play with files. Multiple users can share their files with each other. You can also build custom plugins see examples for more info."
 license = "MIT"
@@ -8,6 +8,7 @@ repository = "https://github.com/rajeev-k47/rootftp"
 readme = "README.md"
 categories = ["command-line-utilities", "network-programming"]
 keywords = ["ftp", "server", "cli"]
+exclude = ["plugin_library/*.so"]
 
 [[bin]]
 name = "rootftp"
