@@ -3,6 +3,8 @@ use crate::constants::{SimpleAuthenticator, UserEntry};
 use crate::listeners::outbox_listener;
 use crate::plugin_handler;
 use crate::plugin_handler::loader::PluginInstance;
+use argon2::password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString};
+use argon2::Argon2;
 use async_trait::async_trait;
 use libunftp::auth::{AuthenticationError, Authenticator, Credentials, DefaultUser};
 use std::collections::{HashMap, HashSet};
@@ -13,6 +15,27 @@ use std::{fs, path::PathBuf};
 static PLUGIN_CACHE: OnceLock<HashMap<String, Arc<PluginInstance>>> = OnceLock::new();
 static INITIALIZED_USERS: Mutex<Option<HashSet<String>>> = Mutex::new(None);
 static OUTBOX_STARTED: AtomicBool = AtomicBool::new(false);
+
+fn hash_password(password: &str) -> String {
+    let salt = SaltString::generate(&mut OsRng);
+    Argon2::default()
+        .hash_password(password.as_bytes(), &salt)
+        .expect("Failed to hash password")
+        .to_string()
+}
+
+fn verify_password(password: &str, stored: &str) -> bool {
+    let Ok(parsed) = PasswordHash::new(stored) else {
+        return false;
+    };
+    Argon2::default()
+        .verify_password(password.as_bytes(), &parsed)
+        .is_ok()
+}
+
+fn is_argon2_hash(s: &str) -> bool {
+    s.starts_with("$argon2")
+}
 
 impl SimpleAuthenticator {
     pub fn new(path: PathBuf) -> Self {
@@ -85,32 +108,42 @@ impl Authenticator<UserEntry> for SimpleAuthenticator {
             .lock()
             .map_err(|_| AuthenticationError::new("Sys. error"))?;
 
-        if let Some(user) = users.iter().find(|u| u.username == _username) {
-            if user.password
-                == _password
-                    .password
-                    .as_deref()
-                    .ok_or(AuthenticationError::BadPassword)?
-            {
-                self.ensure_user_dirs(_username)
-                    .map_err(|e| AuthenticationError::new(format!("Dir err.: {}", e)))?;
-                Ok(UserEntry {
-                    username: _username.to_string(),
-                    password: user.password.clone(),
-                    home_dir: Some(PathBuf::from(_username)),
-                })
-            } else {
-                Err(AuthenticationError::BadPassword)
+        if let Some(idx) = users.iter().position(|u| u.username == _username) {
+            let password = _password
+                .password
+                .as_deref()
+                .ok_or(AuthenticationError::BadPassword)?;
+
+            if !verify_password(password, &users[idx].password) {
+                return Err(AuthenticationError::BadPassword);
             }
+
+            if !is_argon2_hash(&users[idx].password) {
+                users[idx].password = hash_password(password);
+                let json = serde_json::to_string_pretty(&*users)
+                    .map_err(|e| AuthenticationError::new(format!("fail:{}", e)))?;
+                fs::write(&self.path, json)
+                    .map_err(|e| AuthenticationError::new(format!("fail:{}", e)))?;
+            }
+
+            self.ensure_user_dirs(_username)
+                .map_err(|e| AuthenticationError::new(format!("Dir err.: {}", e)))?;
+            Ok(UserEntry {
+                username: _username.to_string(),
+                password: users[idx].password.clone(),
+                home_dir: Some(PathBuf::from(_username)),
+            })
         } else {
             let password = _password
                 .password
                 .as_deref()
                 .ok_or(AuthenticationError::BadPassword)?;
 
+            let hashed = hash_password(password);
+
             users.push(UserEntry {
                 username: _username.to_string(),
-                password: password.to_string(),
+                password: hashed.clone(),
                 home_dir: Some(PathBuf::from(_username)),
             });
             let json = serde_json::to_string_pretty(&*users)
@@ -121,7 +154,7 @@ impl Authenticator<UserEntry> for SimpleAuthenticator {
                 .map_err(|e| AuthenticationError::new(format!("Dir err.: {}", e)))?;
             Ok(UserEntry {
                 username: _username.to_string(),
-                password: password.to_string(),
+                password: hashed,
                 home_dir: Some(PathBuf::from(_username)),
             })
         }
