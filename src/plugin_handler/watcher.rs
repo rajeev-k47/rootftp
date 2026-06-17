@@ -1,7 +1,8 @@
 use crate::plugin_handler::loader::PluginInstance;
 use inotify::{EventMask, Inotify, WatchMask};
 use std::sync::Arc;
-use std::{collections::HashMap, fs, path::PathBuf, thread, time::Duration};
+use std::time::Duration;
+use std::{collections::HashMap, fs, path::PathBuf, thread};
 
 pub fn start_watchers(
     ftpd_root: PathBuf,
@@ -37,7 +38,7 @@ pub fn start_watchers(
             fs::create_dir_all(&out_dir).ok();
             match inotify.watches().add(
                 &dir,
-                WatchMask::CREATE | WatchMask::MOVED_TO | WatchMask::CLOSE_WRITE,
+                WatchMask::CLOSE_WRITE | WatchMask::MOVED_TO,
             ) {
                 Ok(wd) => {
                     wd_map.insert(wd.clone(), (user.clone(), plugin_name.clone()));
@@ -57,41 +58,46 @@ pub fn start_watchers(
                     continue;
                 }
             };
-            thread::sleep(Duration::from_millis(1000));
 
             for ev in events {
+                if ev.mask.contains(EventMask::ISDIR) {
+                    continue;
+                }
                 if !ev
                     .mask
-                    .intersects(EventMask::CREATE | EventMask::MOVED_TO | EventMask::CLOSE_WRITE)
+                    .intersects(EventMask::CLOSE_WRITE | EventMask::MOVED_TO)
                 {
                     continue;
                 }
-                if let Some(name) = ev.name {
-                    let Some((user, plugin_name)) = wd_map.get(&ev.wd) else { continue };
-                    let filename = name.to_string_lossy();
-                    let path = ftpd_root
-                        .join(user)
-                        .join("plugins")
-                        .join(plugin_name)
-                        .join("input")
-                        .join(&*filename);
-                    let out_path = ftpd_root
-                        .join(user)
-                        .join("plugins")
-                        .join(plugin_name)
-                        .join("output");
-                    if let Some(instance) = plugins
-                        .iter()
-                        .find(|(n, _)| n == plugin_name)
-                        .map(|(_, p)| p)
-                    {
-                        if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
-                            if instance.exts.contains(&ext.to_string()) {
-                                instance.plugin.on_create(&path, &out_path)
-                            }
-                        }
-                    }
+                let Some(name) = ev.name else { continue };
+                let Some((user, plugin_name)) = wd_map.get(&ev.wd) else { continue };
+                let filename = name.to_string_lossy();
+                let path = ftpd_root
+                    .join(user)
+                    .join("plugins")
+                    .join(plugin_name)
+                    .join("input")
+                    .join(&*filename);
+                let out_path = ftpd_root
+                    .join(user)
+                    .join("plugins")
+                    .join(plugin_name)
+                    .join("output");
+                let Some(instance) = plugins
+                    .iter()
+                    .find(|(n, _)| n == plugin_name)
+                    .map(|(_, p)| p)
+                else { continue };
+                let Some(ext) = path.extension().and_then(|s| s.to_str()) else { continue };
+                if !instance.exts.contains(&ext.to_string()) {
+                    continue;
                 }
+                let instance = instance.clone();
+                let path = path.clone();
+                let out_path = out_path.clone();
+                thread::spawn(move || {
+                    instance.plugin.on_create(&path, &out_path);
+                });
             }
         }
     });

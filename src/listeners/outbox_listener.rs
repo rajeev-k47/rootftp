@@ -44,11 +44,10 @@ fn run_outbox_watcher(ftpd_root: &Path, username: &str, user_outbox: &Path) {
     ) {
         Ok(wd) => {
             wd_map.insert(wd.clone(), user_outbox.to_path_buf());
-            println!("[{} watcher] Watching {:?}", username, user_outbox); //debug-o.
         }
         Err(e) => {
             eprintln!(
-                "[{} watcher] add_watch failed on {:?}: {}", //debug-o.
+                "[{} watcher] add_watch failed on {:?}: {}",
                 username, user_outbox, e
             );
             return;
@@ -64,11 +63,6 @@ fn run_outbox_watcher(ftpd_root: &Path, username: &str, user_outbox: &Path) {
                     WatchMask::CREATE | WatchMask::MOVED_TO | WatchMask::CLOSE_WRITE,
                 ) {
                     wd_map.insert(wd.clone(), sub_path.clone());
-                    // println!(
-                    //   "[{} watcher] Also watching sub_dir {:?}",
-                    // username, sub_path
-                    // );
-                    //debug-o.
                 }
             }
         }
@@ -80,15 +74,14 @@ fn run_outbox_watcher(ftpd_root: &Path, username: &str, user_outbox: &Path) {
         let events = match inotify.read_events_blocking(&mut buffer) {
             Ok(ev) => ev,
             Err(e) => {
-                eprintln!("[{} watcher] read_events failed: {}", username, e); //debug-o.
-                thread::sleep(Duration::from_secs(1)); //dlay for retry
+                eprintln!("[{} watcher] read_events failed: {}", username, e);
+                thread::sleep(Duration::from_secs(1));
                 continue;
             }
         };
 
         for event in events {
             if event.mask.contains(EventMask::CREATE) && event.mask.contains(EventMask::ISDIR) {
-                //TODO Handle unknown mask panic
                 if let Some(name_os) = event.name {
                     let subdir = user_outbox.join(name_os.to_string_lossy().into_owned());
                     if subdir.is_dir() {
@@ -97,70 +90,47 @@ fn run_outbox_watcher(ftpd_root: &Path, username: &str, user_outbox: &Path) {
                             WatchMask::CREATE | WatchMask::MOVED_TO | WatchMask::CLOSE_WRITE,
                         ) {
                             wd_map.insert(wd.clone(), subdir.clone());
-                            //println!(
-                            //  "[{} watcher] also watching new sub-dir {:?}", //debug-o.
-                            //username, subdir
-                            //);
                         }
                     }
                 }
                 continue;
             }
 
-            if event
+            if !event
                 .mask
-                .intersects(EventMask::CREATE | EventMask::MOVED_TO | EventMask::CLOSE_WRITE)
+                .intersects(EventMask::CLOSE_WRITE | EventMask::MOVED_TO)
             {
-                let watched_path = match wd_map.get(&event.wd) {
-                    Some(p) => p.clone(),
-                    _none => {
-                        eprintln!("[{} watcher] Unknown wd: {:?}", username, event.wd); //debug-o.
-                        continue;
-                    }
+                continue;
+            }
+
+            let watched_path = match wd_map.get(&event.wd) {
+                Some(p) => p.clone(),
+                _none => {
+                    continue;
+                }
+            };
+
+            if let Some(name_os) = event.name {
+                let filename = name_os.to_string_lossy().into_owned();
+                let rel = match watched_path.strip_prefix(&ftpd_root.join(username)) {
+                    Ok(r) => r,
+                    Err(_) => continue,
                 };
+                let comps: Vec<_> = rel
+                    .components()
+                    .map(|c| c.as_os_str().to_string_lossy().into_owned())
+                    .collect();
 
-                if let Some(name_os) = event.name {
-                    let filename = name_os.to_string_lossy().into_owned();
-                    let rel = match watched_path.strip_prefix(&ftpd_root.join(username)) {
-                        Ok(r) => r,
-                        Err(_) => continue,
-                    }; //format-> /outbox/...
-                    let comps: Vec<_> = rel
-                        .components()
-                        .map(|c| c.as_os_str().to_string_lossy().into_owned())
-                        .collect();
+                if comps.len() >= 2 {
+                    let part = &comps[1];
+                    if let Some(target_user) = part.strip_prefix("share.") {
+                        let src = watched_path.join(&filename);
+                        let dest_dir = ftpd_root.join(target_user).join("inbox").join(username);
+                        let dest = dest_dir.join(&filename);
 
-                    if comps.len() >= 2 {
-                        let part = &comps[1];
-                        if let Some(target_user) = part.strip_prefix("share.") {
-                            let src = watched_path.join(&filename);
-                            let dest_dir = ftpd_root.join(target_user).join("inbox").join(username);
-                            let dest = dest_dir.join(&filename);
+                        fs::create_dir_all(&dest_dir).ok();
 
-                            fs::create_dir_all(&dest_dir).ok();
-
-                            match fs::rename(&src, &dest) {
-                                Ok(()) => {
-                                    // println!(
-                                    //   "[{}→{}] Moved {:?} → {:?}",
-                                    // username,
-                                    //target_user,
-                                    //src,
-                                    //dest //debug-o.
-                                    // );
-                                }
-                                Err(_e) => {
-                                    //eprintln!(
-                                    //  "[{}→{}] Move error {:?} → {:?}: {}",
-                                    // username,
-                                    // target_user,
-                                    //src,
-                                    //dest,
-                                    //e //debug-o.
-                                    //);
-                                }
-                            }
-                        }
+                        fs::rename(&src, &dest).ok();
                     }
                 }
             }

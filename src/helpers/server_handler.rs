@@ -59,6 +59,8 @@ pub async fn start_server(
 
     let server_fut = server.listen(addr);
     let ctrl_c_fut = tokio::signal::ctrl_c();
+    let mut term_signal = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())?;
+    let term_fut = term_signal.recv();
 
     tokio::select! {
         result = server_fut => {
@@ -66,6 +68,10 @@ pub async fn start_server(
             result?;
         }
         _ = ctrl_c_fut => {
+            println!("\nShutting down...");
+            remove_pid();
+        }
+        _ = term_fut => {
             println!("\nShutting down...");
             remove_pid();
         }
