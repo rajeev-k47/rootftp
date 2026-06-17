@@ -9,18 +9,29 @@ mod system;
 use clap::Parser;
 use config::Config;
 use constants::SimpleAuthenticator;
-use helpers::server_handler::{start_server, stop_server};
+use helpers::server_handler::{daemonize, start_server, stop_server};
 use local_ip_address::local_ip;
 use system::cli::{Cli, Commands};
 use system::init;
 
-#[tokio::main(flavor = "current_thread")]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let cli = Cli::parse();
+
+    if matches!(cli.command, Commands::Start { daemon: true }) {
+        daemonize()?;
+    }
+
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()?;
+    rt.block_on(run(cli))
+}
+
+async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
     let mut config = Config::load();
     let path = config.root_dir.join("credentials.json");
     let auth = SimpleAuthenticator::new(path.clone());
 
-    let cli = Cli::parse();
     let ip = local_ip().unwrap_or_else(|e| {
         eprintln!(
             "[Warning]: could not detect local IP ({}), falling back to 0.0.0.0",

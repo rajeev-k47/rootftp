@@ -3,7 +3,6 @@ use directories::ProjectDirs;
 use libunftp::auth::Authenticator;
 use libunftp::ServerBuilder;
 use std::fs;
-use std::os::unix::io::AsRawFd;
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Arc;
@@ -28,7 +27,9 @@ fn remove_pid() {
     }
 }
 
-fn daemonize() -> Result<(), Box<dyn std::error::Error>> {
+/// Must be called before tokio runtime starts. Exits the parent process.
+pub fn daemonize() -> Result<(), Box<dyn std::error::Error>> {
+    use std::os::unix::io::AsRawFd;
     match unsafe { libc::fork() } {
         -1 => return Err("first fork failed".into()),
         0 => {}
@@ -57,7 +58,7 @@ pub async fn start_server(
     addr: String,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if daemon {
-        daemonize()?;
+        return Ok(());
     }
 
     let dir = root_dir.join("ftpd");

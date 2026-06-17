@@ -17,8 +17,18 @@ struct Content {
     download_url: Option<String>,
 }
 
+fn plugin_library_arch() -> &'static str {
+    match std::env::consts::ARCH {
+        "aarch64" => "aarch64",
+        "x86_64" => "x86_64",
+        "arm" => "arm",
+        _ => "x86_64",
+    }
+}
+
 pub async fn load_plugins(deb: bool) -> Result<()> {
-    let url = "https://api.github.com/repos/rajeev-k47/rootftp/contents/plugin_library";
+    let arch = plugin_library_arch();
+    let url = format!("https://api.github.com/repos/rajeev-k47/rootftp/contents/plugin_library/{}", arch);
     let client = Client::new();
 
     let resp = client

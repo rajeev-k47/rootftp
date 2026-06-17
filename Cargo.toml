@@ -8,7 +8,7 @@ repository = "https://github.com/rajeev-k47/rootftp"
 readme = "README.md"
 categories = ["command-line-utilities", "network-programming"]
 keywords = ["ftp", "server", "cli"]
-exclude = ["plugin_library/*.so"]
+exclude = ["plugin_library/**/*.so"]
 
 [[bin]]
 name = "rootftp"
@@ -19,16 +19,16 @@ name = "rootftp"
 path = "src/lib.rs" 
 
 [dependencies]
-libunftp = "0.21.0"
-unftp-sbe-fs = "0.3.0"
+libunftp = "=0.21.0"
+unftp-sbe-fs = "=0.3.0"
 tokio = { version = "1", features = ["full"] }
 ftp = "3.0.1"
-unftp-auth-jsonfile = "0.3.6"
+unftp-auth-jsonfile = "=0.3.6"
 async-trait = "0.1.88"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 local-ip-address = "0.6.5"
-unftp-sbe-rooter = "0.2.2"
+unftp-sbe-rooter = "=0.2.2"
 clap = { version = "4.5.38", features = ["derive"] }
 home = "0.5.11"
 directories = "6.0.0"
