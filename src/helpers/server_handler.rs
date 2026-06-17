@@ -3,6 +3,7 @@ use directories::ProjectDirs;
 use libunftp::auth::Authenticator;
 use libunftp::ServerBuilder;
 use std::fs;
+use std::os::unix::io::AsRawFd;
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Arc;
@@ -27,6 +28,28 @@ fn remove_pid() {
     }
 }
 
+fn daemonize() -> Result<(), Box<dyn std::error::Error>> {
+    match unsafe { libc::fork() } {
+        -1 => return Err("first fork failed".into()),
+        0 => {}
+        _ => std::process::exit(0),
+    }
+    unsafe { libc::setsid(); }
+    match unsafe { libc::fork() } {
+        -1 => return Err("second fork failed".into()),
+        0 => {}
+        _ => std::process::exit(0),
+    }
+    let devnull = fs::File::open("/dev/null")?;
+    let fd = devnull.as_raw_fd();
+    unsafe {
+        libc::dup2(fd, 0);
+        libc::dup2(fd, 1);
+        libc::dup2(fd, 2);
+    }
+    Ok(())
+}
+
 pub async fn start_server(
     daemon: bool,
     auth: SimpleAuthenticator,
@@ -34,14 +57,7 @@ pub async fn start_server(
     addr: String,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if daemon {
-        Command::new("nohup")
-            .arg("rootftp")
-            .arg("start")
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
-            .spawn()
-            .expect("Failed to start daemon");
-        return Ok(());
+        daemonize()?;
     }
 
     let dir = root_dir.join("ftpd");

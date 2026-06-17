@@ -2046,6 +2046,7 @@ dependencies = [
  "ftp",
  "home",
  "inotify",
+ "libc",
  "libloading",
  "libunftp",
  "local-ip-address",

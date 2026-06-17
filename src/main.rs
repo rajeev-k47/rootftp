@@ -21,7 +21,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let auth = SimpleAuthenticator::new(path.clone());
 
     let cli = Cli::parse();
-    let ip = local_ip().unwrap();
+    let ip = local_ip().unwrap_or_else(|e| {
+        eprintln!(
+            "[Warning]: could not detect local IP ({}), falling back to 0.0.0.0",
+            e
+        );
+        std::net::IpAddr::V4(std::net::Ipv4Addr::new(0, 0, 0, 0))
+    });
     let addr = format!("{}:{}", ip, 2121);
 
     match cli.command {

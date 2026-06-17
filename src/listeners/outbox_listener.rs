@@ -35,7 +35,13 @@ pub fn start_outbox_watchers(ftpd_root: PathBuf) {
 }
 
 fn run_outbox_watcher(ftpd_root: &Path, username: &str, user_outbox: &Path) {
-    let mut inotify = Inotify::init().expect("Error init inotify");
+    let mut inotify = match Inotify::init() {
+        Ok(i) => i,
+        Err(e) => {
+            eprintln!("[{} watcher] inotify not available, outbox watcher disabled: {}", username, e);
+            return;
+        }
+    };
     let mut wd_map: HashMap<WatchDescriptor, PathBuf> = HashMap::new();
 
     match inotify.watches().add(
