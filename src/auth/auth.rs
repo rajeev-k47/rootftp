@@ -2,9 +2,17 @@ use crate::config::Config;
 use crate::constants::{SimpleAuthenticator, UserEntry};
 use crate::listeners::outbox_listener;
 use crate::plugin_handler;
+use crate::plugin_handler::loader::PluginInstance;
 use async_trait::async_trait;
 use libunftp::auth::{AuthenticationError, Authenticator, Credentials, DefaultUser};
-use std::{fs, path::PathBuf, sync::Mutex};
+use std::collections::{HashMap, HashSet};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex, OnceLock};
+use std::{fs, path::PathBuf};
+
+static PLUGIN_CACHE: OnceLock<HashMap<String, Arc<PluginInstance>>> = OnceLock::new();
+static INITIALIZED_USERS: Mutex<Option<HashSet<String>>> = Mutex::new(None);
+static OUTBOX_STARTED: AtomicBool = AtomicBool::new(false);
 
 impl SimpleAuthenticator {
     pub fn new(path: PathBuf) -> Self {
@@ -29,12 +37,23 @@ impl SimpleAuthenticator {
         fs::create_dir_all(user_dir.join("inbox"))?;
         fs::create_dir_all(user_dir.join("outbox"))?;
 
-        let plugin_map = crate::plugin_handler::load_plugins(&config.root_dir.join("plugins"));
-        plugin_handler::start_watchers(base_path.clone(), username.to_string(), plugin_map);
+        if !OUTBOX_STARTED.swap(true, Ordering::Relaxed) {
+            let ftpd = base_path.clone();
+            std::thread::spawn(move || {
+                outbox_listener::start_outbox_watchers(ftpd);
+            });
+        }
 
-        std::thread::spawn(move || {
-            outbox_listener::start_outbox_watchers(base_path.clone());
-        });
+        let mut guard = INITIALIZED_USERS.lock().unwrap();
+        let set = guard.get_or_insert_with(HashSet::new);
+        if set.insert(username.to_string()) {
+            let plugin_map = PLUGIN_CACHE
+                .get_or_init(|| {
+                    crate::plugin_handler::load_plugins(&config.root_dir.join("plugins"))
+                })
+                .clone();
+            plugin_handler::start_watchers(base_path, username.to_string(), plugin_map);
+        }
 
         Ok(())
     }

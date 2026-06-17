@@ -1,13 +1,14 @@
 use crate::plugin_handler::loader::PluginInstance;
 use inotify::{EventMask, Inotify, WatchMask};
+use std::sync::Arc;
 use std::{collections::HashMap, fs, path::PathBuf, thread, time::Duration};
 
 pub fn start_watchers(
     ftpd_root: PathBuf,
     user: String,
-    plugin_map: HashMap<String, PluginInstance>,
+    plugin_map: HashMap<String, Arc<PluginInstance>>,
 ) {
-    let plugins: Vec<(String, PluginInstance)> = plugin_map.into_iter().collect();
+    let plugins: Vec<(String, Arc<PluginInstance>)> = plugin_map.into_iter().collect();
 
     thread::spawn(move || {
         let mut inotify = match Inotify::init() {
