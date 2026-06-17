@@ -52,6 +52,7 @@ pub async fn start_server(
 
     let auth_arc: Arc<dyn Authenticator<UserEntry> + Send + Sync> = Arc::new(auth);
     let server = ServerBuilder::with_authenticator(storage, auth_arc)
+        .passive_ports(50000u16..=50100u16)
         .build()
         .expect("Failed to build server");
 

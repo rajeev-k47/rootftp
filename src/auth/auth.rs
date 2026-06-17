@@ -103,60 +103,56 @@ impl Authenticator<UserEntry> for SimpleAuthenticator {
             return Err(AuthenticationError::BadUser);
         }
 
-        let mut users = self
-            .users
-            .lock()
-            .map_err(|_| AuthenticationError::new("Sys. error"))?;
+        let password = _password
+            .password
+            .as_deref()
+            .ok_or(AuthenticationError::BadPassword)?;
 
-        if let Some(idx) = users.iter().position(|u| u.username == _username) {
-            let password = _password
-                .password
-                .as_deref()
-                .ok_or(AuthenticationError::BadPassword)?;
+        let password_clone;
+        {
+            let mut users = self
+                .users
+                .lock()
+                .map_err(|_| AuthenticationError::new("Sys. error"))?;
 
-            if !verify_password(password, &users[idx].password) {
-                return Err(AuthenticationError::BadPassword);
-            }
-
-            if !is_argon2_hash(&users[idx].password) {
-                users[idx].password = hash_password(password);
+            if let Some(idx) = users.iter().position(|u| u.username == _username) {
+                if !verify_password(password, &users[idx].password) {
+                    return Err(AuthenticationError::BadPassword);
+                }
+                if !is_argon2_hash(&users[idx].password) {
+                    users[idx].password = hash_password(password);
+                    password_clone = users[idx].password.clone();
+                    let json = serde_json::to_string_pretty(&*users)
+                        .map_err(|e| AuthenticationError::new(format!("fail:{}", e)))?;
+                    drop(users);
+                    fs::write(&self.path, json)
+                        .map_err(|e| AuthenticationError::new(format!("fail:{}", e)))?;
+                } else {
+                    password_clone = users[idx].password.clone();
+                }
+            } else {
+                let hashed = hash_password(password);
+                password_clone = hashed.clone();
+                users.push(UserEntry {
+                    username: _username.to_string(),
+                    password: hashed,
+                    home_dir: Some(PathBuf::from(_username)),
+                });
                 let json = serde_json::to_string_pretty(&*users)
                     .map_err(|e| AuthenticationError::new(format!("fail:{}", e)))?;
+                drop(users);
                 fs::write(&self.path, json)
                     .map_err(|e| AuthenticationError::new(format!("fail:{}", e)))?;
             }
-
-            self.ensure_user_dirs(_username)
-                .map_err(|e| AuthenticationError::new(format!("Dir err.: {}", e)))?;
-            Ok(UserEntry {
-                username: _username.to_string(),
-                password: users[idx].password.clone(),
-                home_dir: Some(PathBuf::from(_username)),
-            })
-        } else {
-            let password = _password
-                .password
-                .as_deref()
-                .ok_or(AuthenticationError::BadPassword)?;
-
-            let hashed = hash_password(password);
-
-            users.push(UserEntry {
-                username: _username.to_string(),
-                password: hashed.clone(),
-                home_dir: Some(PathBuf::from(_username)),
-            });
-            let json = serde_json::to_string_pretty(&*users)
-                .map_err(|e| AuthenticationError::new(format!("fail:{}", e)))?;
-            fs::write(&self.path, json)
-                .map_err(|e| AuthenticationError::new(format!("fail:{}", e)))?;
-            self.ensure_user_dirs(_username)
-                .map_err(|e| AuthenticationError::new(format!("Dir err.: {}", e)))?;
-            Ok(UserEntry {
-                username: _username.to_string(),
-                password: hashed,
-                home_dir: Some(PathBuf::from(_username)),
-            })
         }
+
+        self.ensure_user_dirs(_username)
+            .map_err(|e| AuthenticationError::new(format!("Dir err.: {}", e)))?;
+
+        Ok(UserEntry {
+            username: _username.to_string(),
+            password: password_clone,
+            home_dir: Some(PathBuf::from(_username)),
+        })
     }
 }
